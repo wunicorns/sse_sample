@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>HTTP | Node.js Server Side Event</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic&display=fallback">  
+</head>
+<body>
+    <div>
+        <div>
+          <button id="toggle"> Start </button>
+        </div>
+        <ul id="list"></ul>
+    </div>
+<script>
+
+function start(id){
+
+  var evtSource = new EventSource("/api/" + id, { withCredentials: false } ); 
+  
+  evtSource.onerror = function(e) {
+    // console.log('onerror')
+  
+  }
+  
+  evtSource.onopen = function(e) {
+    // console.log(e)
+  
+  }
+  
+  evtSource.onmessage = function(e) {
+  
+      var newElement = document.createElement("li");
+  
+      var eventList = document.getElementById('list');
+  
+      newElement.innerHTML = "message: " + e.data;
+  
+      eventList.appendChild(newElement);
+  
+  }
+
+  window['_eventSource'] = evtSource;
+
+}
+
+function stop(){
+
+  if(window['_eventSource']){
+    window['_eventSource'].close();
+    delete window['_eventSource'];
+
+    fetch("/api/" + window['_currentId'], {
+      method: "DELETE",
+      headers: [
+        ["Content-Type", "application/json"],
+        ["Content-Type", "text/plain"]
+      ],
+      credentials: "same-origin"
+    });
+  }
+
+}
+
+function eventInit(){
+  var obj = document.getElementById("toggle");
+  obj.onclick = function(){
+    var txt = obj.textContent.trim();
+    if("Start" === txt) {
+      obj.textContent = "Stop";
+      start(window['_currentId']);
+    } else {
+      obj.textContent = "Start";
+      stop(window['_currentId']);
+    }
+  };
+}
+
+function processInit(){
+  fetch("/init", {
+    method: "GET",
+    headers: [
+      ["Content-Type", "application/json"],
+      ["Content-Type", "text/plain"]
+    ],
+    credentials: "same-origin"
+  })
+  .then(async (resp)=>{
+    var json = await resp.json();
+    console.log("Received : ",  json);
+    window['_currentId'] = json.id;
+  });
+};
+
+(function(){
+
+  eventInit();
+  processInit();
+
+}) ();
+
+</script>
+
+
+</body>
