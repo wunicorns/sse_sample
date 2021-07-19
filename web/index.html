@@ -9,36 +9,49 @@
     <div>
         <div>
           <button id="toggle"> Start </button>
+
+          <button id="send"> Send </button>
         </div>
         <ul id="list"></ul>
     </div>
 <script>
 
+const _HOST = "//localhost:8082";
+
+function printRow(eventType, e){
+  var newElement = document.createElement("li");
+  var eventList = document.getElementById('list');
+  newElement.innerHTML = eventType + "message: " + e.data;
+  eventList.appendChild(newElement);
+}
+
 function start(id){
 
-  var evtSource = new EventSource("/api/" + id, { withCredentials: false } ); 
+  var evtSource = new EventSource(`${_HOST}/api/stream/${id}`, { withCredentials: false } ); 
   
   evtSource.onerror = function(e) {
-    // console.log('onerror')
+    console.log('onerror')
   
   }
   
   evtSource.onopen = function(e) {
-    // console.log(e)
+    console.log(e)
   
   }
   
   evtSource.onmessage = function(e) {
-  
-      var newElement = document.createElement("li");
-  
-      var eventList = document.getElementById('list');
-  
-      newElement.innerHTML = "message: " + e.data;
-  
-      eventList.appendChild(newElement);
-  
+    printRow("unknwon", e);  
   }
+
+  evtSource.addEventListener("globalNotification", (e)=>{
+    console.log("globalNotification", e);
+    printRow("globalNotification", e);
+  })
+
+  evtSource.addEventListener("personalNotification", (e)=>{
+    console.log("personalNotification", e);
+    printRow("personalNotification", e);
+  })
 
   window['_eventSource'] = evtSource;
 
@@ -50,11 +63,12 @@ function stop(){
     window['_eventSource'].close();
     delete window['_eventSource'];
 
-    fetch("/api/" + window['_currentId'], {
+    fetch(`${_HOST}/api/stop/${window['_currentId']}`, {
       method: "DELETE",
       headers: [
         ["Content-Type", "application/json"],
-        ["Content-Type", "text/plain"]
+        ["Content-Type", "text/plain"],
+        ["client_id", window['_currentId']]
       ],
       credentials: "same-origin"
     });
@@ -77,7 +91,7 @@ function eventInit(){
 }
 
 function processInit(){
-  fetch("/init", {
+  fetch(`${_HOST}/api/start/${window['_currentId']}`, {
     method: "GET",
     headers: [
       ["Content-Type", "application/json"],
@@ -88,7 +102,7 @@ function processInit(){
   .then(async (resp)=>{
     var json = await resp.json();
     console.log("Received : ",  json);
-    window['_currentId'] = json.id;
+    window['_currentId'] = json.result.client_id;
   });
 };
 

@@ -25,7 +25,7 @@ function runner(){
 
         for(const [id, res] of Object.entries(localCache)){
             
-            res.write(`event:message\ndata:${JSON.stringify({
+            res.write(`event:globalNotification\ndata:${JSON.stringify({
                 messageId: uuidv4(),
                 to: id,
                 data: "hello world! "
@@ -34,6 +34,20 @@ function runner(){
         }
 
     }, 2000);
+    
+    setInterval(()=>{
+
+        for(const [id, res] of Object.entries(localCache)){
+            
+            res.write(`event:personalNotification\ndata:${JSON.stringify({
+                messageId: uuidv4(),
+                to: id,
+                data: "hello world! "
+            })}\n\n`);
+
+        }
+
+    }, 4000);
 
 }
 
@@ -52,7 +66,7 @@ app.get('/init', (req, res, next)=>{
 });
 
 
-app.get('/api/:id', (req, res, next)=>{
+app.get('/api/start', (req, res, next)=>{
 
     // console.log(req.originalUrl);
     console.log(req.params);
@@ -67,7 +81,7 @@ app.get('/api/:id', (req, res, next)=>{
 
 });
 
-app.delete('/api/:id', (req, res, next)=>{
+app.delete('/api/stop/:id', (req, res, next)=>{
 
     clearInterval(localCache[req.params.id]);    
     delete localCache[req.params.id];
