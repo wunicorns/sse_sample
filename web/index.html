@@ -7,11 +7,6 @@
 </head>
 <body>
     <div>
-        <div>
-          <button id="toggle"> Start </button>
-
-          <button id="send"> Send </button>
-        </div>
         <ul id="list"></ul>
     </div>
 <script>
@@ -76,22 +71,8 @@ function stop(){
 
 }
 
-function eventInit(){
-  var obj = document.getElementById("toggle");
-  obj.onclick = function(){
-    var txt = obj.textContent.trim();
-    if("Start" === txt) {
-      obj.textContent = "Stop";
-      start(window['_currentId']);
-    } else {
-      obj.textContent = "Start";
-      stop(window['_currentId']);
-    }
-  };
-}
-
 function processInit(){
-  fetch(`${_HOST}/api/start/${window['_currentId']}`, {
+  fetch(`${_HOST}/api/start`, {
     method: "GET",
     headers: [
       ["Content-Type", "application/json"],
@@ -103,12 +84,14 @@ function processInit(){
     var json = await resp.json();
     console.log("Received : ",  json);
     window['_currentId'] = json.result.client_id;
+
+    start(window['_currentId']);
+
   });
 };
 
 (function(){
 
-  eventInit();
   processInit();
 
 }) ();
